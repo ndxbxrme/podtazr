@@ -1,0 +1,59 @@
+html
+  head
+    link(rel='stylesheet', href='app.css')
+    link(rel='stylesheet', href='icomoon.css')
+  body
+    .vignette
+    audio(src='', controls)
+    .sidebar
+      .row
+        canvas
+      .add-podcast
+        form(onsubmit='renderer.searchPodcasts(event)')
+          input#add-podcast(type='text', placeholder='Search...')
+          input(type='submit', value='Add')
+      .row
+        a.button.subscriptions(onclick='renderer.showSubscriptions()') Subscriptions
+      .row.date-filter
+        a.button.week(onclick='renderer.setDateFilter("week")') Week
+        a.button.month(onclick='renderer.setDateFilter("month")') Month
+        a.button.all(onclick='renderer.setDateFilter("all")') All time
+      .row
+        a.button.feeds(onclick='renderer.showFeeds()') Feeds
+      .row
+        a.button.getChannel(onclick='renderer.getChannel()') Get channel
+        a.button.getChannel(onclick='renderer.joinChannel()') Join channel
+      .podcasts
+    .items
+    .search-results
+    .spinner
+    .options
+      .option.sort(onclick='renderer.changeSort(event)')
+        .forwards &#x25bc
+        .backwards &#x25bc
+    .player
+      .pod
+        .pod-image
+        .pod-details
+          .title
+          .feed-title
+      .controls
+        .buttons
+          .prev.icon-previous2(onclick='renderer.prev()')
+          .playpause
+            .play.icon-play3(onclick='renderer.play()')
+            .stop.icon-stop2(onclick='renderer.stop()')
+          .next.icon-next2(onclick='renderer.next()')
+        .position
+          .current
+          .slider(onclick='renderer.setPosition(event)')
+            .bar
+          .duration
+      .volume
+        .icon.icon-volume-medium
+        .slider(onclick='renderer.setVolume(event)')
+          .bar
+      .background
+      
+    script.
+      window.renderer = require('./renderer');

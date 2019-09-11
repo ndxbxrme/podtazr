@@ -1,0 +1,17 @@
+
+<html>
+  <head>
+    <link rel="stylesheet" href="app.css"/>
+    <link rel="stylesheet" href="icomoon.css"/>
+  </head>
+  <body>
+    <div class="join-channel">
+      <h2>Join channel</h2>
+      <form onsubmit="app.submit(event)">
+        <input class="channelID" type="text"/>
+        <input type="submit" value="Join"/>
+      </form>
+      <script>window.app = require('./join-channel');</script>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "get-channel.js",
+  "sourceRoot": "../src/",
+  "sources": [
+    "get-channel.coffee"
+  ],
+  "names": [],
+  "mappings": "AAAA;AAAA,MAAA;;EAAA,CAAA,CAAC,WAAD,CAAA,GAAgB,OAAA,CAAQ,UAAR,CAAhB;;EAEA,WAAW,CAAC,EAAZ,CAAe,YAAf,EAA6B,QAAA,CAAC,GAAD,EAAM,IAAN,CAAA;WAC3B,QAAQ,CAAC,aAAT,CAAuB,YAAvB,CAAoC,CAAC,SAArC,GAAiD;EADtB,CAA7B;;EAGA,MAAM,CAAC,OAAP,GAAiB,CAAA;AALjB",
+  "sourcesContent": [
+    "{ipcRenderer} = require 'electron'\r\n\r\nipcRenderer.on 'channel-id', (win, data) ->\r\n  document.querySelector('.channelID').innerText = data\r\n\r\nmodule.exports = {}"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "generator-ndx": {
+    "filters": {
+      "settings": {
+        "appType": "electron",
+        "undefined": true,
+        "description": "ndx-framework web app",
+        "appName": "podtazr",
+        "gitname": "ndxbxrme",
+        "gitemail": "lewis_the_cat@hotmail.com"
+      }
+    },
+    "appname": "DEV"
+  }
+}

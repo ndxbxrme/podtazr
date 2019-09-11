@@ -1,0 +1,70 @@
+
+<html>
+  <head>
+    <link rel="stylesheet" href="app.css"/>
+    <link rel="stylesheet" href="icomoon.css"/>
+  </head>
+  <body>
+    <div class="vignette"></div>
+    <audio src="" controls="controls"></audio>
+    <div class="sidebar">
+      <div class="row">
+        <canvas></canvas>
+      </div>
+      <div class="add-podcast">
+        <form onsubmit="renderer.searchPodcasts(event)">
+          <input id="add-podcast" type="text" placeholder="Search..."/>
+          <input type="submit" value="Add"/>
+        </form>
+      </div>
+      <div class="row"><a class="button subscriptions" onclick="renderer.showSubscriptions()">Subscriptions</a></div>
+      <div class="row date-filter"><a class="button week" onclick="renderer.setDateFilter(&quot;week&quot;)">Week</a><a class="button month" onclick="renderer.setDateFilter(&quot;month&quot;)">Month</a><a class="button all" onclick="renderer.setDateFilter(&quot;all&quot;)">All time</a></div>
+      <div class="row"><a class="button feeds" onclick="renderer.showFeeds()">Feeds</a></div>
+      <div class="row"><a class="button getChannel" onclick="renderer.getChannel()">Get channel</a><a class="button getChannel" onclick="renderer.joinChannel()">Join channel</a></div>
+      <div class="podcasts"></div>
+    </div>
+    <div class="items"></div>
+    <div class="search-results"></div>
+    <div class="spinner"></div>
+    <div class="options">
+      <div class="option sort" onclick="renderer.changeSort(event)">
+        <div class="forwards">&#x25bc</div>
+        <div class="backwards">&#x25bc</div>
+      </div>
+    </div>
+    <div class="player">
+      <div class="pod">
+        <div class="pod-image"></div>
+        <div class="pod-details">
+          <div class="title"></div>
+          <div class="feed-title"></div>
+        </div>
+      </div>
+      <div class="controls">
+        <div class="buttons">
+          <div class="prev icon-previous2" onclick="renderer.prev()"></div>
+          <div class="playpause">
+            <div class="play icon-play3" onclick="renderer.play()"></div>
+            <div class="stop icon-stop2" onclick="renderer.stop()"></div>
+          </div>
+          <div class="next icon-next2" onclick="renderer.next()"></div>
+        </div>
+        <div class="position">
+          <div class="current"></div>
+          <div class="slider" onclick="renderer.setPosition(event)">
+            <div class="bar"></div>
+          </div>
+          <div class="duration"></div>
+        </div>
+      </div>
+      <div class="volume">
+        <div class="icon icon-volume-medium"></div>
+        <div class="slider" onclick="renderer.setVolume(event)">
+          <div class="bar"></div>
+        </div>
+      </div>
+      <div class="background"></div>
+    </div>
+    <script>window.renderer = require('./renderer');</script>
+  </body>
+</html>

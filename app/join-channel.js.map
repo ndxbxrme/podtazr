@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "join-channel.js",
+  "sourceRoot": "../src/",
+  "sources": [
+    "join-channel.coffee"
+  ],
+  "names": [],
+  "mappings": "AAAA;AAAA,MAAA;;EAAA,CAAA,CAAC,WAAD,CAAA,GAAgB,OAAA,CAAQ,UAAR,CAAhB;;EAEA,MAAM,CAAC,OAAP,GACE;IAAA,MAAA,EAAQ,QAAA,CAAC,KAAD,CAAA;MACN,KAAK,CAAC,eAAN,CAAA;aACA,WAAW,CAAC,IAAZ,CAAiB,gBAAjB,EAAmC,QAAQ,CAAC,aAAT,CAAuB,YAAvB,CAAoC,CAAC,KAAxE;IAFM;EAAR;AAHF",
+  "sourcesContent": [
+    "{ipcRenderer} = require 'electron'\r\n\r\nmodule.exports =\r\n  submit: (event) ->\r\n    event.stopPropagation()\r\n    ipcRenderer.send 'set-channel-id', document.querySelector('.channelID').value\r\n    "
+  ]
+}

@@ -1,0 +1,12 @@
+html
+  head
+    link(rel='stylesheet', href='app.css')
+    link(rel='stylesheet', href='icomoon.css')
+  body
+    .join-channel
+      h2 Join channel
+      form(onsubmit='app.submit(event)')
+        input.channelID(type='text')
+        input(type='submit', value='Join')
+      script.
+        window.app = require('./join-channel');

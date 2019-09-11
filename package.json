@@ -1,0 +1,49 @@
+{
+  "name": "podtazr",
+  "version": "0.0.1",
+  "description": "ndx-framework web app",
+  "main": "app/main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack-win": "build --win -p always",
+    "pack-mac": "build --mac -p always"
+  },
+  "build": {
+    "appId": "com.ndxbxrme.podtazr",
+    "productName": "podtazr"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ndxbxrme/podtazr"
+  },
+  "author": "ndxbxrme",
+  "license": "MIT",
+  "homepage": "https://github.com/ndxbxrme/podtazr",
+  "devDependencies": {
+    "electron": "^6.0.7",
+    "electron-builder": "^21.2.0",
+    "grunt": "^1.0.4",
+    "grunt-cli": "^1.3.2",
+    "grunt-contrib-clean": "^2.0.0",
+    "grunt-contrib-coffee": "^2.1.0",
+    "grunt-contrib-copy": "^1.0.0",
+    "grunt-contrib-pug": "^2.0.0",
+    "grunt-contrib-stylus": "^1.2.0",
+    "grunt-contrib-watch": "^1.1.0",
+    "load-grunt-tasks": "^5.1.0"
+  },
+  "dependencies": {
+    "bson-objectid": "^1.3.0",
+    "electron-updater": "^4.1.2",
+    "fast-date-format": "^2.2.3",
+    "format-duration-time": "^1.5.2",
+    "fs-extra": "^8.1.0",
+    "google-it": "^1.2.1",
+    "ndxdb": "^1.12.3",
+    "object-encryptor": "git+https://github.com/ndxbxrme/object-encryptor.git",
+    "pusher": "^2.2.2",
+    "pusher-js": "^5.0.1",
+    "rss-parser": "^3.7.2",
+    "twas": "^2.1.1"
+  }
+}
