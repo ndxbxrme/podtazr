@@ -142,7 +142,8 @@
       options = {
         width: user.width || 800,
         height: user.height || 600,
-        autoHideMenuBar: true
+        autoHideMenuBar: true,
+        nodeIntegration: true
       };
       if (typeof user.x === 'number') {
         options.x = user.x;
@@ -172,7 +173,7 @@
       };
       mainWindow.on('resize', saveWindowPosition);
       mainWindow.on('move', saveWindowPosition);
-      mainWindow.openDevTools();
+      //mainWindow.openDevTools()
       appChannel = pusherRec.subscribe('app-' + user.channelID);
       appChannel.bind('sync', function(data) {
         return onSync(data);
@@ -361,7 +362,8 @@
       show: false,
       autoHideMenuBar: true,
       width: 435,
-      height: 140
+      height: 140,
+      nodeIntegration: true
     });
     child.on('closed', function() {
       return child = null;
@@ -385,7 +387,8 @@
       show: false,
       autoHideMenuBar: true,
       width: 435,
-      height: 140
+      height: 140,
+      nodeIntegration: true
     });
     child.on('closed', function() {
       return child = null;
