@@ -90,7 +90,8 @@ ready = ->
       width: user.width or 800
       height: user.height or 600
       autoHideMenuBar: true
-      nodeIntegration: true
+      webPreferences:
+        nodeIntegration: true
     if typeof(user.x) is 'number'
       options.x = user.x
       options.y = user.y
@@ -238,7 +239,8 @@ ipcMain.on 'get-channel', (win) ->
     autoHideMenuBar: true
     width: 435
     height: 140
-    nodeIntegration: true
+    webPreferences:
+      nodeIntegration: true
   child.on 'closed', ->
     child = null
   child.loadURL url.format
@@ -257,7 +259,8 @@ openJoinWindow = ->
     autoHideMenuBar: true
     width: 435
     height: 140
-    nodeIntegration: true
+    webPreferences:
+      nodeIntegration: true
   child.on 'closed', ->
     child = null
   child.loadURL url.format

@@ -143,7 +143,9 @@
         width: user.width || 800,
         height: user.height || 600,
         autoHideMenuBar: true,
-        nodeIntegration: true
+        webPreferences: {
+          nodeIntegration: true
+        }
       };
       if (typeof user.x === 'number') {
         options.x = user.x;
@@ -363,7 +365,9 @@
       autoHideMenuBar: true,
       width: 435,
       height: 140,
-      nodeIntegration: true
+      webPreferences: {
+        nodeIntegration: true
+      }
     });
     child.on('closed', function() {
       return child = null;
@@ -388,7 +392,9 @@
       autoHideMenuBar: true,
       width: 435,
       height: 140,
-      nodeIntegration: true
+      webPreferences: {
+        nodeIntegration: true
+      }
     });
     child.on('closed', function() {
       return child = null;
