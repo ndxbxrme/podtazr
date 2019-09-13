@@ -9,7 +9,7 @@
     return {
       draw: function() {
         var i, sliceWidth, v, x, y;
-        analyser.getByteTimeDomainData(dataArray);
+        analyser.getByteFrequencyData(dataArray);
         canvasCtx.fillStyle = 'rgb(0, 0, 0)';
         canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
         canvasCtx.lineWidth = 2;

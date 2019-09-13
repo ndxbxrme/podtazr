@@ -1,6 +1,6 @@
 {
   "name": "podtazr",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "ndx-framework web app",
   "main": "app/main.js",
   "scripts": {

@@ -5,7 +5,7 @@ module.exports = (analyser) ->
   canvas = document.querySelector 'canvas'
   canvasCtx = canvas.getContext '2d'
   draw: ->
-    analyser.getByteTimeDomainData dataArray
+    analyser.getByteFrequencyData dataArray
     canvasCtx.fillStyle = 'rgb(0, 0, 0)'
     canvasCtx.fillRect 0, 0, canvas.width, canvas.height
     canvasCtx.lineWidth = 2
