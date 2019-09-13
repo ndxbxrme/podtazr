@@ -1,5 +1,5 @@
 (function() {
-  var $filterAll, $filterMonth, $filterWeek, $items, $optionsSortBackwards, $optionsSortForwards, $player, $playerFeedTitle, $playerImage, $playerNext, $playerPlay, $playerPodTitle, $playerPositionBar, $playerPositionCurrent, $playerPositionDuration, $playerPrev, $playerStop, $playerVolumeBar, $searchResults, $spinner, DateFormat, Parser, addPodcast, allItems, audioElm, autoplay, changeSort, clearPlayState, currentElm, currentFeed, currentItem, dateFilter, dateFormat, dateFrom, dateRanges, dateTo, debounce, doReportListenStatus, draw, duration, fetchPodcast, fetchRssFeeds, formatDuration, getChannel, googleIt, hideSpinner, ipcRenderer, joinChannel, listens, main, next, parser, play, podcasts, prev, renderItems, renderPlayer, renderPodcasts, renderSidebar, reportListenStatus, sanitize, searchPodcasts, setDateFilter, setPageState, setPlayState, setPosition, setVolume, setupAudio, showFeed, showPodcastEpisodes, showSpinner, showSubscriptions, sort, sortDir, stop, throttle, twas, updateDateFilter, user, viz;
+  var $filterAll, $filterMonth, $filterWeek, $items, $optionsSortBackwards, $optionsSortForwards, $player, $playerFeedTitle, $playerImage, $playerNext, $playerPlay, $playerPodTitle, $playerPositionBar, $playerPositionCurrent, $playerPositionDuration, $playerPrev, $playerStop, $playerVolumeBar, $searchResults, $spinner, DateFormat, Parser, addPodcast, allItems, audioElm, autoplay, changeSort, clearPlayState, currentElm, currentFeed, currentItem, dateFilter, dateFormat, dateFrom, dateRanges, dateTo, debounce, doReportListenStatus, draw, duration, fetchPodcast, fetchRssFeeds, formatDuration, getChannel, googleIt, hideSpinner, ipcRenderer, joinChannel, listens, main, next, parser, play, podcasts, prev, renderItems, renderPlayer, renderPodcasts, renderSidebar, reportListenStatus, sanitize, searchPodcasts, setDateFilter, setPageState, setPlayState, setPosition, setStatusFilter, setVolume, setupAudio, showFeed, showPodcastEpisodes, showSpinner, showSubscriptions, sort, sortDir, statusFilter, stop, throttle, twas, updateDateFilter, updateStatusFilter, user, viz;
 
   ({ipcRenderer} = require('electron'));
 
@@ -32,6 +32,8 @@
   autoplay = true;
 
   dateFilter = 'week';
+
+  statusFilter = 'unlistened';
 
   dateFrom = new Date().valueOf() - 7 * 24 * 60 * 60 * 1000;
 
@@ -188,6 +190,19 @@
     return document.querySelector('.sidebar .date-filter .' + dateFilter).className += ' selected';
   };
 
+  updateStatusFilter = function(_statusFilter) {
+    var filterBtn, j, len, ref;
+    ref = document.querySelectorAll('.sidebar .status-filter .button');
+    for (j = 0, len = ref.length; j < len; j++) {
+      filterBtn = ref[j];
+      filterBtn.className = filterBtn.className.replace(/\s*selected/g, '');
+    }
+    if (_statusFilter) {
+      statusFilter = _statusFilter;
+    }
+    return document.querySelector('.sidebar .status-filter .' + statusFilter).className += ' selected';
+  };
+
   setPageState = function(state) {
     switch (state) {
       case 'search-results':
@@ -302,7 +317,7 @@
           break;
         }
       }
-      html += '<div class="item ' + sanitize((ref = item.enclosure) != null ? ref.url : void 0) + '"><a onclick="renderer.play(\'' + ((ref1 = item.enclosure) != null ? ref1.url : void 0) + '\')"><div class="image" style="background-image: url(' + (((ref2 = item.itunes) != null ? ref2.image : void 0) || ((ref3 = item.feed.itunes) != null ? ref3.image : void 0) || ((ref4 = item.feed.image) != null ? ref4.url : void 0)) + ')" /></div><div class="details"><div class="fade"></div><div class="title">' + item.title + '</div><div class="pod-details"><div class="pod-title">' + item.feed.title + '</div><div class="date">' + dateFormat.format(new Date(item.pubDate)) + '</div></div><div class="summary">' + item.contentSnippet + '</div><div class="duration">' + formatDuration((ref5 = item.itunes) != null ? ref5.duration : void 0) + '</div></div></a></div>';
+      html += '<div class="item ' + sanitize((ref = item.enclosure) != null ? ref.url : void 0) + '"><a onclick="renderer.play(\'' + ((ref1 = item.enclosure) != null ? ref1.url : void 0) + '\')"><div class="image" style="background-image: url(' + (((ref2 = item.itunes) != null ? ref2.image : void 0) || ((ref3 = item.feed.itunes) != null ? ref3.image : void 0) || ((ref4 = item.feed.image) != null ? ref4.url : void 0)) + ')" /></div><div class="details"><div class="fade"></div><div class="title">' + item.title + '</div><div class="pod-details"><div class="pod-title" onclick="renderer.showFeed(\'' + item.feed.url + '\', event)">' + item.feed.title + '</div><div class="date">' + dateFormat.format(new Date(item.pubDate)) + '</div></div><div class="summary">' + item.contentSnippet + '</div><div class="duration">' + formatDuration((ref5 = item.itunes) != null ? ref5.duration : void 0) + '</div></div></a></div>';
     }
     return document.querySelector('.items').innerHTML = html;
   };
@@ -340,8 +355,16 @@
     }
     allItems = allItems.filter(function(item) {
       var ref3;
-      if ((dateFrom < (ref3 = new Date(item.pubDate).valueOf()) && ref3 < dateTo)) {
+      if (currentItem && currentItem.url === item.url) {
         return true;
+      }
+      if ((dateFrom < (ref3 = new Date(item.pubDate).valueOf()) && ref3 < dateTo)) {
+        if (item.percent && item.percent > 5) {
+          item.listened = true;
+          return statusFilter === 'listened' || statusFilter === 'all';
+        } else {
+          return statusFilter === 'unlistened' || statusFilter === 'all';
+        }
       }
       return false;
     });
@@ -369,6 +392,13 @@
     return renderSidebar();
   };
 
+  setStatusFilter = async function(filter) {
+    updateStatusFilter(filter);
+    await renderPodcasts();
+    renderPlayer();
+    return renderSidebar();
+  };
+
   main = function() {
     setupAudio();
     ipcRenderer.send('get-user');
@@ -386,6 +416,7 @@
       listens = data.listens;
       renderPodcasts(data.podcasts);
       updateDateFilter();
+      updateStatusFilter();
       return renderSidebar();
     });
     ipcRenderer.on('listens', function(win, _listens) {
@@ -605,15 +636,20 @@
   showPodcastEpisodes = function(event, feedUrl) {
     var j, len, podcast;
     event.stopPropagation();
+    console.log('show pod episodes', feedUrl);
     for (j = 0, len = podcasts.length; j < len; j++) {
       podcast = podcasts[j];
       if (podcast.feedUrl === feedUrl) {
+        console.log('got podcast');
         return renderPodcasts([podcast]);
       }
     }
   };
 
-  showFeed = function(url) {
+  showFeed = function(url, event) {
+    if (event) {
+      event.stopPropagation();
+    }
     currentFeed = url;
     setPageState('feed');
     sort = 'pubDate';
@@ -658,6 +694,7 @@
     showPodcastEpisodes: showPodcastEpisodes,
     changeSort: changeSort,
     setDateFilter: setDateFilter,
+    setStatusFilter: setStatusFilter,
     showFeed: showFeed,
     showSubscriptions: showSubscriptions,
     getChannel: getChannel,

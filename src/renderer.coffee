@@ -14,6 +14,7 @@ currentElm = null
 currentFeed = null
 autoplay = true
 dateFilter = 'week'
+statusFilter = 'unlistened'
 dateFrom = new Date().valueOf() - 7 * 24 * 60 * 60 * 1000
 dateTo = Number.MAX_SAFE_INTEGER
 sort = 'pubDate'
@@ -106,6 +107,11 @@ updateDateFilter = (_dateFilter) ->
     when 'all'
       dateFrom = 0
   document.querySelector('.sidebar .date-filter .' + dateFilter).className += ' selected'
+updateStatusFilter = (_statusFilter) ->
+  for filterBtn in document.querySelectorAll('.sidebar .status-filter .button')
+    filterBtn.className = filterBtn.className.replace /\s*selected/g, ''
+  statusFilter = _statusFilter if _statusFilter
+  document.querySelector('.sidebar .status-filter .' + statusFilter).className += ' selected'
 setPageState = (state) ->
   switch state
     when 'search-results'
@@ -188,7 +194,7 @@ renderItems = ->
           range.used = true
           html += '<div class="date-range">' + range.name + '</div>'
         break
-    html += '<div class="item ' + sanitize(item.enclosure?.url) + '"><a onclick="renderer.play(\'' + item.enclosure?.url + '\')"><div class="image" style="background-image: url(' + (item.itunes?.image or item.feed.itunes?.image or item.feed.image?.url) + ')" /></div><div class="details"><div class="fade"></div><div class="title">' + item.title + '</div><div class="pod-details"><div class="pod-title">' + item.feed.title + '</div><div class="date">' + dateFormat.format(new Date(item.pubDate)) + '</div></div><div class="summary">' + item.contentSnippet + '</div><div class="duration">' + formatDuration(item.itunes?.duration) + '</div></div></a></div>'
+    html += '<div class="item ' + sanitize(item.enclosure?.url) + '"><a onclick="renderer.play(\'' + item.enclosure?.url + '\')"><div class="image" style="background-image: url(' + (item.itunes?.image or item.feed.itunes?.image or item.feed.image?.url) + ')" /></div><div class="details"><div class="fade"></div><div class="title">' + item.title + '</div><div class="pod-details"><div class="pod-title" onclick="renderer.showFeed(\'' + item.feed.url + '\', event)">' + item.feed.title + '</div><div class="date">' + dateFormat.format(new Date(item.pubDate)) + '</div></div><div class="summary">' + item.contentSnippet + '</div><div class="duration">' + formatDuration(item.itunes?.duration) + '</div></div></a></div>'
   document.querySelector('.items').innerHTML = html
   
 renderPodcasts = (_podcasts) ->
@@ -208,8 +214,13 @@ renderPodcasts = (_podcasts) ->
             break
     allItems = allItems.concat podcast.items
   allItems = allItems.filter (item) ->
+    return true if currentItem and currentItem.url is item.url
     if dateFrom < new Date(item.pubDate).valueOf() < dateTo
-      return true
+      if item.percent and item.percent > 5
+        item.listened = true
+        return statusFilter is 'listened' or statusFilter is 'all'
+      else
+        return statusFilter is 'unlistened' or statusFilter is 'all'
     false
   allItems.sort (a, b) ->
     if new Date(a[sort]) > new Date(b[sort]) then sortDir else sortDir * -1
@@ -226,6 +237,13 @@ setDateFilter = (filter) ->
   await renderPodcasts()
   renderPlayer()
   renderSidebar()
+  
+setStatusFilter = (filter) ->
+  updateStatusFilter filter
+  await renderPodcasts()
+  renderPlayer()
+  renderSidebar()
+  
 
 main = ->
   setupAudio()
@@ -242,6 +260,7 @@ main = ->
     listens = data.listens
     renderPodcasts data.podcasts
     updateDateFilter()
+    updateStatusFilter()
     renderSidebar()
   ipcRenderer.on 'listens', (win, _listens) ->
     listens = _listens
@@ -390,11 +409,14 @@ next = ->
   
 showPodcastEpisodes = (event, feedUrl) ->
   event.stopPropagation()
+  console.log 'show pod episodes', feedUrl
   for podcast in podcasts
     if podcast.feedUrl is feedUrl
+      console.log 'got podcast'
       return renderPodcasts [podcast]
       
-showFeed = (url) ->
+showFeed = (url, event) ->
+  event.stopPropagation() if event
   currentFeed = url
   setPageState 'feed'
   sort = 'pubDate'
@@ -431,6 +453,7 @@ module.exports =
   showPodcastEpisodes: showPodcastEpisodes
   changeSort: changeSort
   setDateFilter: setDateFilter
+  setStatusFilter: setStatusFilter
   showFeed: showFeed
   showSubscriptions: showSubscriptions
   getChannel: getChannel
