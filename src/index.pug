@@ -13,8 +13,9 @@ html
         form(onsubmit='renderer.searchPodcasts(event)')
           input#add-podcast(type='text', placeholder='Search...')
           input(type='submit', value='Add')
-      .row
-        a.button.subscriptions(onclick='renderer.showSubscriptions()') Subscriptions
+      .row.pages
+        a.button.subscriptions(onclick='renderer.showSubscriptions()') Episodes
+        a.button.feeds(onclick='renderer.showFeeds()') Feeds
       .row.date-filter
         a.button.week(onclick='renderer.setDateFilter("week")') Week
         a.button.month(onclick='renderer.setDateFilter("month")') Month
@@ -23,14 +24,23 @@ html
         a.button.unlistened(onclick='renderer.setStatusFilter("unlistened")') Unlistened
         a.button.listened(onclick='renderer.setStatusFilter("listened")') Listened
         a.button.all(onclick='renderer.setStatusFilter("all")') All
-      .row
-        a.button.feeds(onclick='renderer.showFeeds()') Feeds
-      .row
-        a.button.getChannel(onclick='renderer.getChannel()') Get channel
-        a.button.getChannel(onclick='renderer.joinChannel()') Join channel
+      .row.pages
+        a.button.settings(onclick='renderer.showSettings()') Settings
       .podcasts
     .items
     .search-results
+    .feeds-directory
+    .settings-page
+      .page-title Settings
+      .setting
+        .label Connect
+        .controls
+          h4 My ID
+          .channelID
+          h4 Connect to another Podtazr
+          form(onsubmit='app.submitChannelID(event)')
+            input.channelID(type='text')
+            input(type='submit', value='Connect')
     .spinner
     .options
       .option.sort(onclick='renderer.changeSort(event)')

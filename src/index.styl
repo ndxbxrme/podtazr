@@ -20,9 +20,10 @@ body
     pointer-events none
 audio
   display none
-.items, .search-results
+.items, .search-results, .feeds-directory, .settings-page
   flex-direction column
   margin-left 15rem
+  margin-bottom 10rem
 .sidebar
   position fixed
   top 0
@@ -203,18 +204,19 @@ audio
       transform rotate(180deg)
       display none
       
-.date-range
+.date-range, .page-title
   font-weight normal
   font-size 1.8rem
   font-family sans-serif
   margin 1rem 0
   padding-left calc(100px + 1rem)
-.item
+.feed
+  display flex
+.item, .feed
   margin 0.6rem 0
   &.playing
-    background rgba(0,0,0,0.2)
-  &.paused
-    background rgba(0,0,0,0.1)
+    .details .summary
+      filter brightness(150)
   a
     display flex
     cursor pointer
@@ -245,7 +247,7 @@ audio
       font-size 1.1rem
       margin-right 3rem
       color white
-    .pod-details
+    .pod-details, .feed-details
       font-size 0.9rem
       padding 0.3rem 0
       display flex
@@ -257,6 +259,13 @@ audio
           filter brightness(1.5)
       .date
         color #ac87bf
+      .link
+        cursor pointer
+        margin-right 1rem
+        &:hover
+          filter brightness(1.5)
+    .feed-details
+      justify-content flex-start
     .summary
       font-size 1rem
     .duration
@@ -270,6 +279,17 @@ audio
       color white
 .search-results .item
   display flex
+.settings-page
+  .setting
+    display flex
+    .label
+      width calc(100px + 1rem)
+    .controls
+      h4
+        margin 0 0 .5rem 0
+      .channelID
+        padding .5rem
+        box-shadow inset 1px 1px 1px rgba(0,0,0,0.3)
   
 .join-channel
   form

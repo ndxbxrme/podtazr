@@ -46,6 +46,8 @@ dateRanges = [
 ]
 $items = document.querySelector('.items')
 $searchResults = document.querySelector('.search-results')
+$feeds = document.querySelector('.feeds-directory')
+$settings = document.querySelector('.settings-page')
 $player = document.querySelector('.player')
 $playerPodTitle = document.querySelector('.player .pod .title')
 $playerFeedTitle = document.querySelector('.player .pod .feed-title')
@@ -113,13 +115,30 @@ updateStatusFilter = (_statusFilter) ->
   statusFilter = _statusFilter if _statusFilter
   document.querySelector('.sidebar .status-filter .' + statusFilter).className += ' selected'
 setPageState = (state) ->
+  for filterBtn in document.querySelectorAll('.sidebar .pages .button')
+    filterBtn.className = filterBtn.className.replace /\s*selected/g, ''
+  document.querySelector('.sidebar .pages .' + state)?.className += ' selected'
   switch state
     when 'search-results'
       $items.style.display = 'none'
       $searchResults.style.display = 'flex'
+      $feeds.style.display = 'none'
+      $settings.style.display = 'none'
+    when 'feeds'
+      $items.style.display = 'none'
+      $searchResults.style.display = 'none'
+      $feeds.style.display = 'flex'
+      $settings.style.display = 'none'
+    when 'settings'
+      $items.style.display = 'none'
+      $searchResults.style.display = 'none'
+      $feeds.style.display = 'none'
+      $settings.style.display = 'flex'
     else
       $items.style.display = 'flex'
       $searchResults.style.display = 'none'
+      $feeds.style.display = 'none'
+      $settings.style.display = 'none'
 
 setupAudio = ->
   el = document.querySelector 'audio'
@@ -196,11 +215,25 @@ renderItems = ->
         break
     html += '<div class="item ' + sanitize(item.enclosure?.url) + '"><a onclick="renderer.play(\'' + item.enclosure?.url + '\')"><div class="image" style="background-image: url(' + (item.itunes?.image or item.feed.itunes?.image or item.feed.image?.url) + ')" /></div><div class="details"><div class="fade"></div><div class="title">' + item.title + '</div><div class="pod-details"><div class="pod-title" onclick="renderer.showFeed(\'' + item.feed.url + '\', event)">' + item.feed.title + '</div><div class="date">' + dateFormat.format(new Date(item.pubDate)) + '</div></div><div class="summary">' + item.contentSnippet + '</div><div class="duration">' + formatDuration(item.itunes?.duration) + '</div></div></a></div>'
   document.querySelector('.items').innerHTML = html
+renderFeeds = ->
+  html = ''
+  mypods = []
+  for podcast in podcasts
+    mypods.push
+      title: podcast.title
+      url: podcast.url
+      description: podcast.description
+      image: podcast.itunes?.image or podcast.image?.url or podcast.items[0].itunes?.image
+      noItems: podcast.items.length
+  mypods.sort (a, b) ->
+    if a.title > b.title then 1 else -1
+  for podcast in mypods
+    html += '<div class="feed"><div class="image" style="background-image: url(' + podcast.image + ')"></div><div class="details"><div class="title">' + podcast.title + '</div><div class="feed-details"><div class="link" onclick="renderer.showFeed(\'' + podcast.url + '\', event)">' + podcast.noItems + ' episodes</div><div class="link unsubscribe" onclick="renderer.unsubscribe(\'' + podcast.url + '\', event)">Unsubscribe</div></div><div class="fade"></div><div class="summary">' + podcast.description + '</div></div></div>'
+  $feeds.innerHTML = html
   
 renderPodcasts = (_podcasts) ->
   return if not ((_podcasts or podcasts) and listens)
   console.log 'start'
-  setPageState 'items'
   allItems = []
   for podcast in (_podcasts or podcasts)
     continue if currentFeed and currentFeed isnt podcast.url
@@ -247,24 +280,26 @@ setStatusFilter = (filter) ->
 
 main = ->
   setupAudio()
+  setPageState 'subscriptions'
   ipcRenderer.send 'get-user'
   ipcRenderer.on 'user', (win, _user) ->
     user = _user
-    #ipcRenderer.send 'get-podcasts'
-    console.log 'user', user
+    ipcRenderer.send 'get-channel'
   ipcRenderer.on 'podcast', (win, _podcast) ->
     console.log 'podcast', _podcast
   ipcRenderer.on 'podcasts', (win, data) ->
-    console.log data
     podcasts = data.podcasts
     listens = data.listens
     renderPodcasts data.podcasts
+    renderFeeds()
     updateDateFilter()
     updateStatusFilter()
     renderSidebar()
   ipcRenderer.on 'listens', (win, _listens) ->
     listens = _listens
     renderPodcasts()
+  ipcRenderer.on 'channel-id', (win, data) ->
+    document.querySelector('.channelID').innerText = data
   setInterval ->
     ipcRenderer.send 'check-for-new'
   , 10 * 1000
@@ -316,6 +351,10 @@ searchPodcasts = (e) ->
   
 addPodcast = (url) ->
   ipcRenderer.send 'add-podcast', url
+  
+unsubscribe = (url, event) ->
+  event.stopPropagation() if event
+  ipcRenderer.send 'unsubscribe', url
   
 renderPlayer = ->
   if sortDir < 0
@@ -382,7 +421,6 @@ play = (url) ->
   if currentItem
     clearPlayState currentElm
     setPlayState()
-    audioElm.volume = 0.1
     audioElm.play()
     $player.style.display = 'flex'
   else
@@ -414,6 +452,7 @@ showPodcastEpisodes = (event, feedUrl) ->
     if podcast.feedUrl is feedUrl
       console.log 'got podcast'
       return renderPodcasts [podcast]
+  window.scrollTo 0, 0
       
 showFeed = (url, event) ->
   event.stopPropagation() if event
@@ -422,6 +461,17 @@ showFeed = (url, event) ->
   sort = 'pubDate'
   sortDir = -1
   setDateFilter 'all'
+  window.scrollTo 0, 0
+  
+showFeeds = (event) ->
+  event.stopPropagation() if event
+  renderFeeds()
+  setPageState 'feeds'
+  window.scrollTo 0, 0
+  
+showSettings = ->
+  setPageState 'settings'
+  window.scrollTo 0, 0
   
 showSubscriptions = ->
   currentFeed = null
@@ -429,12 +479,17 @@ showSubscriptions = ->
   sort = 'pubDate'
   sortDir = -1
   setDateFilter 'week'
+  window.scrollTo 0, 0
   
 getChannel = ->
   ipcRenderer.send 'get-channel'
   
 joinChannel = ->
   ipcRenderer.send 'join-channel'
+  
+submitChannelID = (event) ->
+  event.stopPropagation()
+  ipcRenderer.send 'set-channel-id', document.querySelector('.channelID').value
       
 draw = ->
   requestAnimationFrame draw
@@ -455,6 +510,10 @@ module.exports =
   setDateFilter: setDateFilter
   setStatusFilter: setStatusFilter
   showFeed: showFeed
+  showFeeds: showFeeds
+  showSettings: showSettings
   showSubscriptions: showSubscriptions
   getChannel: getChannel
   joinChannel: joinChannel
+  unsubscribe: unsubscribe
+  submitChannelID: submitChannelID

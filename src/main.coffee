@@ -140,17 +140,14 @@ fetchAndUpsertPodcast = (url) ->
   return podcast
   
 fetchPodcast = (url) ->
-  console.log 'fetch', url
   url = sanitizeUrl url
   dbPodcast = await db.selectOne 'podcasts',
     url: url
   if dbPodcast
     if new Date(dbPodcast.lastVisited).valueOf() + (2 * 60 * 60 * 1000) < new Date().valueOf()
-      console.log 1, new Date(new Date(dbPodcast.lastVisited).valueOf() + (2 * 60 * 60 * 1000)), new Date()
       podcast = await fetchAndUpsertPodcast url
       return podcast
   else
-    console.log 0
     dbPodcast = await fetchAndUpsertPodcast url
   return dbPodcast
   
@@ -185,25 +182,30 @@ refreshFeeds = ->
   podcasts: podcasts
   listens: listens
   
+updateSubscription = (url, status) ->
+  sub =
+    url: url
+    status: status
+    date: new Date().valueOf()
+  await db.insert 'subscriptions', sub
+  sub.channelID = user.channelID
+  pusherSend.trigger 'app-' + user.channelID, 'report-subscriptions', 
+    channelID: user.channelID
+    clientID: user.clientID
+    subscriptions: [sub]
+  pusherSend.trigger 'global', 'report-subscriptions', 
+    channelID: user.channelID
+    clientID: user.clientID
+    subscriptions: [sub]
 ipcMain.on 'get-user', (win) ->
   win.sender.webContents.send 'user', user
 ipcMain.on 'add-podcast', (win, url) ->
   podcast = await fetchPodcast url
   if podcast
-    sub =
-      url: url
-      status: true
-      date: new Date().valueOf()
-    await db.insert 'subscriptions', sub
-    sub.channelID = user.channelID
-    pusherSend.trigger 'app-' + user.channelID, 'report-subscriptions', 
-      channelID: user.channelID
-      clientID: user.clientID
-      subscriptions: [sub]
-    pusherSend.trigger 'global', 'report-subscriptions', 
-      channelID: user.channelID
-      clientID: user.clientID
-      subscriptions: [sub]
+    updateSubscription url, true
+  win.sender.webContents.send 'podcasts', await refreshFeeds()
+ipcMain.on 'unsubscribe', (win, url) ->
+  updateSubscription url, false
   win.sender.webContents.send 'podcasts', await refreshFeeds()
 ipcMain.on 'get-podcasts', (win, url) ->
   win.sender.webContents.send 'podcasts', await refreshFeeds()
@@ -211,18 +213,14 @@ ipcMain.on 'get-listens', (win) ->
   listens = await db.select 'listens'
   win.sender.webContents.send 'listens', listens
 ipcMain.on 'check-for-new', (win) ->
-  console.log 'check for new'
-  #data = await refreshFeeds()
-  #mainWindow.webContents.send 'podcasts', data
   podcasts = await db.select 'podcasts'
   updated = []
   for podcast in podcasts
     newPodcast = await fetchPodcast podcast.url
-    if newPodcast.lastUpdated isnt podcast.lastUpdated
+    if newPodcast.items[0]?.pubDate isnt podcast.items[0]?.pubDate
       updated.push newPodcast
-  console.log updated.length
   if updated.length
-    #mainWindow.webContents.send 'update-podcasts', updated
+    console.log 'sending updates', updated.length
     win.sender.webContents.send 'podcasts', await refreshFeeds()
 ipcMain.on 'app-listen', (win, details) ->
   reportListen details, 'app'
@@ -232,6 +230,7 @@ ipcMain.on 'get-channel', (win) ->
   myobj =
     channelID: user.channelID
   myobj = await objectEncryptor.encrypt myobj, ['channelID']
+  ###
   child = new BrowserWindow
     parent: mainWindow
     modal: true
@@ -251,6 +250,8 @@ ipcMain.on 'get-channel', (win) ->
     child.show()
     child.webContents.send 'channel-id', myobj.channelID
   console.log myobj.channelID
+  ###
+  win.sender.webContents.send 'channel-id', myobj.channelID
 openJoinWindow = ->
   child = new BrowserWindow
     parent: mainWindow

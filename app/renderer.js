@@ -1,5 +1,5 @@
 (function() {
-  var $filterAll, $filterMonth, $filterWeek, $items, $optionsSortBackwards, $optionsSortForwards, $player, $playerFeedTitle, $playerImage, $playerNext, $playerPlay, $playerPodTitle, $playerPositionBar, $playerPositionCurrent, $playerPositionDuration, $playerPrev, $playerStop, $playerVolumeBar, $searchResults, $spinner, DateFormat, Parser, addPodcast, allItems, audioElm, autoplay, changeSort, clearPlayState, currentElm, currentFeed, currentItem, dateFilter, dateFormat, dateFrom, dateRanges, dateTo, debounce, doReportListenStatus, draw, duration, fetchPodcast, fetchRssFeeds, formatDuration, getChannel, googleIt, hideSpinner, ipcRenderer, joinChannel, listens, main, next, parser, play, podcasts, prev, renderItems, renderPlayer, renderPodcasts, renderSidebar, reportListenStatus, sanitize, searchPodcasts, setDateFilter, setPageState, setPlayState, setPosition, setStatusFilter, setVolume, setupAudio, showFeed, showPodcastEpisodes, showSpinner, showSubscriptions, sort, sortDir, statusFilter, stop, throttle, twas, updateDateFilter, updateStatusFilter, user, viz;
+  var $feeds, $filterAll, $filterMonth, $filterWeek, $items, $optionsSortBackwards, $optionsSortForwards, $player, $playerFeedTitle, $playerImage, $playerNext, $playerPlay, $playerPodTitle, $playerPositionBar, $playerPositionCurrent, $playerPositionDuration, $playerPrev, $playerStop, $playerVolumeBar, $searchResults, $settings, $spinner, DateFormat, Parser, addPodcast, allItems, audioElm, autoplay, changeSort, clearPlayState, currentElm, currentFeed, currentItem, dateFilter, dateFormat, dateFrom, dateRanges, dateTo, debounce, doReportListenStatus, draw, duration, fetchPodcast, fetchRssFeeds, formatDuration, getChannel, googleIt, hideSpinner, ipcRenderer, joinChannel, listens, main, next, parser, play, podcasts, prev, renderFeeds, renderItems, renderPlayer, renderPodcasts, renderSidebar, reportListenStatus, sanitize, searchPodcasts, setDateFilter, setPageState, setPlayState, setPosition, setStatusFilter, setVolume, setupAudio, showFeed, showFeeds, showPodcastEpisodes, showSettings, showSpinner, showSubscriptions, sort, sortDir, statusFilter, stop, submitChannelID, throttle, twas, unsubscribe, updateDateFilter, updateStatusFilter, user, viz;
 
   ({ipcRenderer} = require('electron'));
 
@@ -83,6 +83,10 @@
   $items = document.querySelector('.items');
 
   $searchResults = document.querySelector('.search-results');
+
+  $feeds = document.querySelector('.feeds-directory');
+
+  $settings = document.querySelector('.settings-page');
 
   $player = document.querySelector('.player');
 
@@ -204,13 +208,36 @@
   };
 
   setPageState = function(state) {
+    var filterBtn, j, len, ref, ref1;
+    ref = document.querySelectorAll('.sidebar .pages .button');
+    for (j = 0, len = ref.length; j < len; j++) {
+      filterBtn = ref[j];
+      filterBtn.className = filterBtn.className.replace(/\s*selected/g, '');
+    }
+    if ((ref1 = document.querySelector('.sidebar .pages .' + state)) != null) {
+      ref1.className += ' selected';
+    }
     switch (state) {
       case 'search-results':
         $items.style.display = 'none';
-        return $searchResults.style.display = 'flex';
+        $searchResults.style.display = 'flex';
+        $feeds.style.display = 'none';
+        return $settings.style.display = 'none';
+      case 'feeds':
+        $items.style.display = 'none';
+        $searchResults.style.display = 'none';
+        $feeds.style.display = 'flex';
+        return $settings.style.display = 'none';
+      case 'settings':
+        $items.style.display = 'none';
+        $searchResults.style.display = 'none';
+        $feeds.style.display = 'none';
+        return $settings.style.display = 'flex';
       default:
         $items.style.display = 'flex';
-        return $searchResults.style.display = 'none';
+        $searchResults.style.display = 'none';
+        $feeds.style.display = 'none';
+        return $settings.style.display = 'none';
     }
   };
 
@@ -322,13 +349,40 @@
     return document.querySelector('.items').innerHTML = html;
   };
 
+  renderFeeds = function() {
+    var html, j, k, len, len1, mypods, podcast, ref, ref1, ref2;
+    html = '';
+    mypods = [];
+    for (j = 0, len = podcasts.length; j < len; j++) {
+      podcast = podcasts[j];
+      mypods.push({
+        title: podcast.title,
+        url: podcast.url,
+        description: podcast.description,
+        image: ((ref = podcast.itunes) != null ? ref.image : void 0) || ((ref1 = podcast.image) != null ? ref1.url : void 0) || ((ref2 = podcast.items[0].itunes) != null ? ref2.image : void 0),
+        noItems: podcast.items.length
+      });
+    }
+    mypods.sort(function(a, b) {
+      if (a.title > b.title) {
+        return 1;
+      } else {
+        return -1;
+      }
+    });
+    for (k = 0, len1 = mypods.length; k < len1; k++) {
+      podcast = mypods[k];
+      html += '<div class="feed"><div class="image" style="background-image: url(' + podcast.image + ')"></div><div class="details"><div class="title">' + podcast.title + '</div><div class="feed-details"><div class="link" onclick="renderer.showFeed(\'' + podcast.url + '\', event)">' + podcast.noItems + ' episodes</div><div class="link unsubscribe" onclick="renderer.unsubscribe(\'' + podcast.url + '\', event)">Unsubscribe</div></div><div class="fade"></div><div class="summary">' + podcast.description + '</div></div></div>';
+    }
+    return $feeds.innerHTML = html;
+  };
+
   renderPodcasts = function(_podcasts) {
     var item, j, k, l, len, len1, len2, listen, podcast, ref, ref1, ref2;
     if (!((_podcasts || podcasts) && listens)) {
       return;
     }
     console.log('start');
-    setPageState('items');
     allItems = [];
     ref = _podcasts || podcasts;
     for (j = 0, len = ref.length; j < len; j++) {
@@ -401,20 +455,20 @@
 
   main = function() {
     setupAudio();
+    setPageState('subscriptions');
     ipcRenderer.send('get-user');
     ipcRenderer.on('user', function(win, _user) {
       user = _user;
-      //ipcRenderer.send 'get-podcasts'
-      return console.log('user', user);
+      return ipcRenderer.send('get-channel');
     });
     ipcRenderer.on('podcast', function(win, _podcast) {
       return console.log('podcast', _podcast);
     });
     ipcRenderer.on('podcasts', function(win, data) {
-      console.log(data);
       podcasts = data.podcasts;
       listens = data.listens;
       renderPodcasts(data.podcasts);
+      renderFeeds();
       updateDateFilter();
       updateStatusFilter();
       return renderSidebar();
@@ -422,6 +476,9 @@
     ipcRenderer.on('listens', function(win, _listens) {
       listens = _listens;
       return renderPodcasts();
+    });
+    ipcRenderer.on('channel-id', function(win, data) {
+      return document.querySelector('.channelID').innerText = data;
     });
     return setInterval(function() {
       return ipcRenderer.send('check-for-new');
@@ -499,6 +556,13 @@
 
   addPodcast = function(url) {
     return ipcRenderer.send('add-podcast', url);
+  };
+
+  unsubscribe = function(url, event) {
+    if (event) {
+      event.stopPropagation();
+    }
+    return ipcRenderer.send('unsubscribe', url);
   };
 
   renderPlayer = function() {
@@ -591,7 +655,6 @@
     if (currentItem) {
       clearPlayState(currentElm);
       setPlayState();
-      audioElm.volume = 0.1;
       audioElm.play();
       return $player.style.display = 'flex';
     } else {
@@ -644,6 +707,7 @@
         return renderPodcasts([podcast]);
       }
     }
+    return window.scrollTo(0, 0);
   };
 
   showFeed = function(url, event) {
@@ -654,7 +718,22 @@
     setPageState('feed');
     sort = 'pubDate';
     sortDir = -1;
-    return setDateFilter('all');
+    setDateFilter('all');
+    return window.scrollTo(0, 0);
+  };
+
+  showFeeds = function(event) {
+    if (event) {
+      event.stopPropagation();
+    }
+    renderFeeds();
+    setPageState('feeds');
+    return window.scrollTo(0, 0);
+  };
+
+  showSettings = function() {
+    setPageState('settings');
+    return window.scrollTo(0, 0);
   };
 
   showSubscriptions = function() {
@@ -662,7 +741,8 @@
     setPageState('subscriptions');
     sort = 'pubDate';
     sortDir = -1;
-    return setDateFilter('week');
+    setDateFilter('week');
+    return window.scrollTo(0, 0);
   };
 
   getChannel = function() {
@@ -671,6 +751,11 @@
 
   joinChannel = function() {
     return ipcRenderer.send('join-channel');
+  };
+
+  submitChannelID = function(event) {
+    event.stopPropagation();
+    return ipcRenderer.send('set-channel-id', document.querySelector('.channelID').value);
   };
 
   draw = function() {
@@ -696,9 +781,13 @@
     setDateFilter: setDateFilter,
     setStatusFilter: setStatusFilter,
     showFeed: showFeed,
+    showFeeds: showFeeds,
+    showSettings: showSettings,
     showSubscriptions: showSubscriptions,
     getChannel: getChannel,
-    joinChannel: joinChannel
+    joinChannel: joinChannel,
+    unsubscribe: unsubscribe,
+    submitChannelID: submitChannelID
   };
 
 }).call(this);

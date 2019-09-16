@@ -1,6 +1,6 @@
 (function() {
   'use strict';
-  var BrowserWindow, ObjectID, Parser, Pusher, PusherJs, app, appChannel, autoUpdater, child, db, fetchAndUpsertPodcast, fetchPodcast, fs, ipcMain, keys, mainWindow, objectEncryptor, onSync, openJoinWindow, parser, path, pusherRec, pusherSend, ready, refreshFeeds, reportListen, sanitizeUrl, sync, url, user;
+  var BrowserWindow, ObjectID, Parser, Pusher, PusherJs, app, appChannel, autoUpdater, child, db, fetchAndUpsertPodcast, fetchPodcast, fs, ipcMain, keys, mainWindow, objectEncryptor, onSync, openJoinWindow, parser, path, pusherRec, pusherSend, ready, refreshFeeds, reportListen, sanitizeUrl, sync, updateSubscription, url, user;
 
   ({app, BrowserWindow, ipcMain} = require('electron'));
 
@@ -214,19 +214,16 @@
 
   fetchPodcast = async function(url) {
     var dbPodcast, podcast;
-    console.log('fetch', url);
     url = sanitizeUrl(url);
     dbPodcast = (await db.selectOne('podcasts', {
       url: url
     }));
     if (dbPodcast) {
       if (new Date(dbPodcast.lastVisited).valueOf() + (2 * 60 * 60 * 1000) < new Date().valueOf()) {
-        console.log(1, new Date(new Date(dbPodcast.lastVisited).valueOf() + (2 * 60 * 60 * 1000)), new Date());
         podcast = (await fetchAndUpsertPodcast(url));
         return podcast;
       }
     } else {
-      console.log(0);
       dbPodcast = (await fetchAndUpsertPodcast(url));
     }
     return dbPodcast;
@@ -284,32 +281,42 @@
     };
   };
 
+  updateSubscription = async function(url, status) {
+    var sub;
+    sub = {
+      url: url,
+      status: status,
+      date: new Date().valueOf()
+    };
+    await db.insert('subscriptions', sub);
+    sub.channelID = user.channelID;
+    pusherSend.trigger('app-' + user.channelID, 'report-subscriptions', {
+      channelID: user.channelID,
+      clientID: user.clientID,
+      subscriptions: [sub]
+    });
+    return pusherSend.trigger('global', 'report-subscriptions', {
+      channelID: user.channelID,
+      clientID: user.clientID,
+      subscriptions: [sub]
+    });
+  };
+
   ipcMain.on('get-user', function(win) {
     return win.sender.webContents.send('user', user);
   });
 
   ipcMain.on('add-podcast', async function(win, url) {
-    var podcast, sub;
+    var podcast;
     podcast = (await fetchPodcast(url));
     if (podcast) {
-      sub = {
-        url: url,
-        status: true,
-        date: new Date().valueOf()
-      };
-      await db.insert('subscriptions', sub);
-      sub.channelID = user.channelID;
-      pusherSend.trigger('app-' + user.channelID, 'report-subscriptions', {
-        channelID: user.channelID,
-        clientID: user.clientID,
-        subscriptions: [sub]
-      });
-      pusherSend.trigger('global', 'report-subscriptions', {
-        channelID: user.channelID,
-        clientID: user.clientID,
-        subscriptions: [sub]
-      });
+      updateSubscription(url, true);
     }
+    return win.sender.webContents.send('podcasts', (await refreshFeeds()));
+  });
+
+  ipcMain.on('unsubscribe', async function(win, url) {
+    updateSubscription(url, false);
     return win.sender.webContents.send('podcasts', (await refreshFeeds()));
   });
 
@@ -324,22 +331,18 @@
   });
 
   ipcMain.on('check-for-new', async function(win) {
-    var i, len, newPodcast, podcast, podcasts, updated;
-    console.log('check for new');
-    //data = await refreshFeeds()
-    //mainWindow.webContents.send 'podcasts', data
+    var i, len, newPodcast, podcast, podcasts, ref, ref1, updated;
     podcasts = (await db.select('podcasts'));
     updated = [];
     for (i = 0, len = podcasts.length; i < len; i++) {
       podcast = podcasts[i];
       newPodcast = (await fetchPodcast(podcast.url));
-      if (newPodcast.lastUpdated !== podcast.lastUpdated) {
+      if (((ref = newPodcast.items[0]) != null ? ref.pubDate : void 0) !== ((ref1 = podcast.items[0]) != null ? ref1.pubDate : void 0)) {
         updated.push(newPodcast);
       }
     }
-    console.log(updated.length);
     if (updated.length) {
-      //mainWindow.webContents.send 'update-podcasts', updated
+      console.log('sending updates', updated.length);
       return win.sender.webContents.send('podcasts', (await refreshFeeds()));
     }
   });
@@ -358,30 +361,28 @@
       channelID: user.channelID
     };
     myobj = (await objectEncryptor.encrypt(myobj, ['channelID']));
-    child = new BrowserWindow({
-      parent: mainWindow,
-      modal: true,
-      show: false,
-      autoHideMenuBar: true,
-      width: 435,
-      height: 140,
-      webPreferences: {
+    /*
+    child = new BrowserWindow
+      parent: mainWindow
+      modal: true
+      show: false
+      autoHideMenuBar: true
+      width: 435
+      height: 140
+      webPreferences:
         nodeIntegration: true
-      }
-    });
-    child.on('closed', function() {
-      return child = null;
-    });
-    child.loadURL(url.format({
-      pathname: path.join(__dirname, 'get-channel.html'),
-      protocol: 'file:',
+    child.on 'closed', ->
+      child = null
+    child.loadURL url.format
+      pathname: path.join __dirname, 'get-channel.html'
+      protocol: 'file:'
       slashes: true
-    }));
-    child.once('ready-to-show', function() {
-      child.show();
-      return child.webContents.send('channel-id', myobj.channelID);
-    });
-    return console.log(myobj.channelID);
+    child.once 'ready-to-show', ->
+      child.show()
+      child.webContents.send 'channel-id', myobj.channelID
+    console.log myobj.channelID
+    */
+    return win.sender.webContents.send('channel-id', myobj.channelID);
   });
 
   openJoinWindow = function() {

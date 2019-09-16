@@ -18,15 +18,30 @@
           <input type="submit" value="Add"/>
         </form>
       </div>
-      <div class="row"><a class="button subscriptions" onclick="renderer.showSubscriptions()">Subscriptions</a></div>
+      <div class="row pages"><a class="button subscriptions" onclick="renderer.showSubscriptions()">Episodes</a><a class="button feeds" onclick="renderer.showFeeds()">Feeds</a></div>
       <div class="row date-filter"><a class="button week" onclick="renderer.setDateFilter(&quot;week&quot;)">Week</a><a class="button month" onclick="renderer.setDateFilter(&quot;month&quot;)">Month</a><a class="button all" onclick="renderer.setDateFilter(&quot;all&quot;)">All time</a></div>
       <div class="row status-filter"><a class="button unlistened" onclick="renderer.setStatusFilter(&quot;unlistened&quot;)">Unlistened</a><a class="button listened" onclick="renderer.setStatusFilter(&quot;listened&quot;)">Listened</a><a class="button all" onclick="renderer.setStatusFilter(&quot;all&quot;)">All</a></div>
-      <div class="row"><a class="button feeds" onclick="renderer.showFeeds()">Feeds</a></div>
-      <div class="row"><a class="button getChannel" onclick="renderer.getChannel()">Get channel</a><a class="button getChannel" onclick="renderer.joinChannel()">Join channel</a></div>
+      <div class="row pages"><a class="button settings" onclick="renderer.showSettings()">Settings</a></div>
       <div class="podcasts"></div>
     </div>
     <div class="items"></div>
     <div class="search-results"></div>
+    <div class="feeds-directory"></div>
+    <div class="settings-page">
+      <div class="page-title">Settings</div>
+      <div class="setting">
+        <div class="label">Connect</div>
+        <div class="controls">
+          <h4>My ID</h4>
+          <div class="channelID"></div>
+          <h4>Connect to another Podtazr</h4>
+          <form onsubmit="app.submitChannelID(event)">
+            <input class="channelID" type="text"/>
+            <input type="submit" value="Connect"/>
+          </form>
+        </div>
+      </div>
+    </div>
     <div class="spinner"></div>
     <div class="options">
       <div class="option sort" onclick="renderer.changeSort(event)">
